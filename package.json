@@ -1,0 +1,53 @@
+{
+  "name": "@civ-clone/base-diplomacy",
+  "version": "0.1.0",
+  "description": "Baseline diplomacy a ruleset builds its rules from: contact, standing, war and peace, a computer player's stance and the steps of a meeting, with the ruleset's own numbers.",
+  "repository": "git@github.com:civ-clone/base-diplomacy.git",
+  "keywords": [
+    "typescript",
+    "civilization"
+  ],
+  "author": "dom111 <dom111@users.noreply.github.com>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "npm run ts:compile && npm run prettier:format",
+    "prettier:check": "prettier --config .prettierrc --check '**/*.ts'",
+    "prettier:format": "prettier --config .prettierrc '**/*.ts' --write",
+    "test": "ts-mocha ./tests/*.test.ts",
+    "ts:compile": "tsc --build tsconfig.json"
+  },
+  "devDependencies": {
+    "@civ-clone/core-ai-client": "^0.1.3",
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^18.15.0",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "prettier": "^2.8.8",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "@civ-clone/base-city-yield-gold": "^0.1.1",
+    "@civ-clone/base-civilization-barbarian": "^0.1.1",
+    "@civ-clone/base-diplomacy-declaration-peace": "^0.1.0",
+    "@civ-clone/base-diplomacy-declaration-war": "^0.1.0",
+    "@civ-clone/base-diplomacy-interaction-contact": "^0.1.0",
+    "@civ-clone/base-leader-personality": "^0.1.2",
+    "@civ-clone/core-city": "^0.1.24",
+    "@civ-clone/core-civilization": "^0.1.8",
+    "@civ-clone/core-client": "^0.1.4",
+    "@civ-clone/core-diplomacy": "^0.1.8",
+    "@civ-clone/core-government": "^0.1.6",
+    "@civ-clone/core-player": "^0.1.10",
+    "@civ-clone/core-power": "^0.1.0",
+    "@civ-clone/core-rule": "^0.1.9",
+    "@civ-clone/core-science": "^0.1.9",
+    "@civ-clone/core-treasury": "^0.1.10",
+    "@civ-clone/core-turn-based-game": "^0.1.10",
+    "@civ-clone/core-unit": "^0.1.29",
+    "@civ-clone/core-world": "^0.1.23",
+    "@civ-clone/library-diplomacy": "^0.1.4"
+  }
+}
