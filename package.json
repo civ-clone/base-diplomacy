@@ -1,6 +1,6 @@
 {
   "name": "@civ-clone/base-diplomacy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Baseline diplomacy a ruleset builds its rules from: contact, standing, war and peace, a computer player's stance and the steps of a meeting, with the ruleset's own numbers.",
   "repository": "git@github.com:civ-clone/base-diplomacy.git",
   "keywords": [
