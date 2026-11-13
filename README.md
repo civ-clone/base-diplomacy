@@ -23,5 +23,7 @@ level) and its own numbers, so it keeps its own rule ids, numbers and registrati
   and what comes next, for the ruleset to make `Step` rules of.
 - `lib/knowledge`: `advancesLacked` and `give`.
 - `lib/exchanged`: `recordTaken` and `takenBy`, what each player took in an exchange of knowledge.
+- `Dialogues/AdvanceTaken`: the `Dialogue` in which a player says which advance it took in an exchange of knowledge
+  (key `exchange-knowledge.taken`). Saves name it by its class name, so a game registers it as a saveable class.
 
 A library: it registers no rules. See `civ1-diplomacy` for Civilization's.
