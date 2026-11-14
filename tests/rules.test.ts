@@ -1,6 +1,9 @@
 import { MeetingStepNumbers } from '../lib/meetingSteps';
 import { MeetingRules, meetingFor } from '../lib/meeting';
 import Negotiation from '@civ-clone/core-diplomacy/Negotiation';
+import Never from '@civ-clone/core-diplomacy/Expiries/Never';
+import Peace from '@civ-clone/base-diplomacy-declaration-peace/Peace';
+import ShamPeace from '@civ-clone/library-diplomacy/Declarations/ShamPeace';
 import Player from '@civ-clone/core-player/Player';
 import Rule from '@civ-clone/core-rule/Rule';
 import detonatedRules from '../lib/rules/detonated';
@@ -225,5 +228,73 @@ describe('rule assemblers', (): void => {
         other
       )
     ).eql([false]);
+  });
+
+  it('announce a treaty ending, but not a pretence, nor a peace a player only pretended to keep', (): void => {
+    const { dependencies, players, ruleRegistry } = position([{}, {}, {}]),
+      [first, second, third] = players,
+      [rule] = expiredRules('x', engine, dependencies.interactionRegistry),
+      peace = new Peace(first, second, new Never(), ruleRegistry),
+      sham = new ShamPeace(first, second, new Never(), ruleRegistry),
+      otherPeace = new Peace(first, third, new Never(), ruleRegistry);
+
+    dependencies.interactionRegistry.register(peace, otherPeace);
+
+    expect(rule.validate(peace)).true;
+
+    dependencies.interactionRegistry.register(sham);
+
+    expect(rule.validate(sham)).false;
+    expect(rule.validate(peace)).false;
+    expect(rule.validate(otherPeace)).true;
+  });
+
+  it("drop a sham peace with the ruleset's chance", (): void => {
+    const run = (chance: number) => {
+      const { dependencies, players, ruleRegistry } = position([{}, {}]),
+        [holder, against] = players,
+        peace = new Peace(holder, against, new Never(), ruleRegistry);
+
+      dependencies.interactionRegistry.register(
+        peace,
+        new ShamPeace(holder, against, new Never(), ruleRegistry)
+      );
+      turnStartRules('x', dependencies, () => 0.5, chance)[0].process(holder);
+
+      return peace.active();
+    };
+
+    expect(run(0.4)).true;
+    expect(run(0.6)).false;
+  });
+
+  it("space a person's meetings after a treaty by the ruleset's number", (): void => {
+    const { dependencies, players, readers } = position([{}, { human: true }], {
+        turn: 100,
+      }),
+      [computer, person] = players,
+      lastMet = Object.assign(Object.create(Negotiation.prototype), {
+        when: () => 90,
+      }),
+      treaty = Object.assign(Object.create(Peace.prototype), {
+        when: () => 95,
+      }),
+      withTreaty = {
+        ...dependencies,
+        interactionRegistry: {
+          getByPlayers: () => [lastMet, treaty],
+        } as any,
+      },
+      may = (afterTreaty: number) =>
+        mayNegotiateRules('x', withTreaty, readers.isHuman, {
+          withPerson: 1,
+          withPersonAfterTreaty: afterTreaty,
+          computers: 1,
+        })
+          .filter((rule) => rule.validate(computer, person))
+          .map((rule) => rule.process(computer, person));
+
+    expect(may(10)).eql([true]);
+    expect(may(11)).eql([false]);
   });
 });
