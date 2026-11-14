@@ -26,4 +26,8 @@ level) and its own numbers, so it keeps its own rule ids, numbers and registrati
 - `Dialogues/AdvanceTaken`: the `Dialogue` in which a player says which advance it took in an exchange of knowledge
   (key `exchange-knowledge.taken`). Saves name it by its class name, so a game registers it as a saveable class.
 
+- `lib/rules/*`: rule assemblers, which build a ruleset's rules with its own id prefix (`<prefix>:...`) and numbers,
+  rule for rule as civ1-diplomacy's: `expiredRules`, `interactionRules`, `stepRules`, `mayNegotiateRules` (with
+  `MeetingSpacing`), `turnStartRules`, `resolvedRules`, `detonatedRules` and `movedRules`.
+
 A library: it registers no rules. See `civ1-diplomacy` for Civilization's.

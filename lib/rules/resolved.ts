@@ -1,0 +1,195 @@
+import { declareWar, makePeace } from '../declareWar';
+import Accept from '@civ-clone/core-diplomacy/Proposal/Accept';
+import Acknowledge from '@civ-clone/core-diplomacy/Proposal/Acknowledge';
+import Advance from '@civ-clone/core-science/Advance';
+import CancelTreaty from '@civ-clone/library-diplomacy/Proposals/CancelTreaty';
+import ChoiceMeta from '@civ-clone/core-client/ChoiceMeta';
+import Criterion from '@civ-clone/core-rule/Criterion';
+import DemandTribute from '@civ-clone/library-diplomacy/Proposals/DemandTribute';
+import Dependencies from '../Dependencies';
+import Dialogue from '@civ-clone/core-diplomacy/Negotiation/Dialogue';
+import Effect from '@civ-clone/core-rule/Effect';
+import ExchangeKnowledge from '@civ-clone/library-diplomacy/Proposals/ExchangeKnowledge';
+import Gold from '@civ-clone/base-city-yield-gold/Gold';
+import { IProposal } from '@civ-clone/core-diplomacy/Negotiation/Proposal';
+import { IResolution } from '@civ-clone/core-diplomacy/Proposal/Resolution';
+import Negotiation from '@civ-clone/core-diplomacy/Negotiation';
+import OfferPeace from '@civ-clone/library-diplomacy/Proposals/OfferPeace';
+import OfferPeaceWithGift from '@civ-clone/library-diplomacy/Proposals/OfferPeaceWithGift';
+import Peace from '@civ-clone/base-diplomacy-declaration-peace/Peace';
+import Player from '@civ-clone/core-player/Player';
+import Resolved from '@civ-clone/core-diplomacy/Rules/Proposal/Resolved';
+import Vendetta from '@civ-clone/library-diplomacy/Declarations/Vendetta';
+import Never from '@civ-clone/core-diplomacy/Expiries/Never';
+import { activeDeclarations } from '../declareWar';
+import { advancesLacked, give } from '../knowledge';
+import { calm, knownMeeting, negotiationOf } from '../meeting';
+import { recordTaken } from '../exchanged';
+
+declare global {
+  interface ChoiceMetaDataMap {
+    'diplomacy.exchange-knowledge': typeof Advance;
+  }
+}
+
+/**
+ * What each answer in a meeting does (`stepRules`):
+ *
+ * - `<prefix>:proposal/resolved/peace`: peace accepted, with the gifts that came with it;
+ * - `<prefix>:proposal/resolved/tribute`: tribute paid;
+ * - `<prefix>:proposal/resolved/cancel-treaty`: the other player cancels its treaty with the computer player's enemy,
+ *   who won't forget it; with chance `waiveTribute` the computer player then waives its tribute;
+ * - `<prefix>:proposal/resolved/exchange-knowledge`: each side picks an advance the other has;
+ * - `<prefix>:proposal/resolved/declare-war`: war declared;
+ * - `<prefix>:proposal/resolved/computer-peace`: two computer players make peace, each giving the other an advance
+ *   first if both have one to give.
+ */
+export const resolvedRules = (
+  prefix: string,
+  dependencies: Dependencies,
+  random: () => number,
+  waiveTribute: number
+): Resolved[] => {
+  const { clientRegistry, playerResearchRegistry, ruleRegistry } = dependencies,
+    accepted = (ProposalType: new (...args: any[]) => IProposal) =>
+      new Criterion(
+        (resolution: IResolution, proposal: IProposal): boolean =>
+          resolution instanceof Accept && proposal instanceof ProposalType
+      ),
+    acknowledged = (...keys: string[]) =>
+      new Criterion(
+        (resolution: IResolution, proposal: IProposal): boolean =>
+          resolution instanceof Acknowledge &&
+          proposal instanceof Dialogue &&
+          keys.some(
+            (key) =>
+              proposal.key() === key || proposal.key().startsWith(`${key}.`)
+          )
+      );
+
+  return [
+    new Resolved(
+      `${prefix}:proposal/resolved/peace`,
+      accepted(OfferPeace),
+      new Effect(
+        async (resolution: IResolution, proposal: IProposal): Promise<void> => {
+          if (proposal instanceof OfferPeaceWithGift) {
+            proposal
+              .gifts()
+              .forEach((gift) =>
+                give(dependencies, gift, proposal.by(), resolution.by())
+              );
+          }
+
+          makePeace(dependencies, proposal.by(), resolution.by());
+        }
+      )
+    ),
+
+    new Resolved(
+      `${prefix}:proposal/resolved/tribute`,
+      accepted(DemandTribute),
+      new Effect(
+        async (resolution: IResolution, proposal: IProposal): Promise<void> => {
+          give(
+            dependencies,
+            (proposal as DemandTribute).tribute(),
+            resolution.by(),
+            proposal.by()
+          );
+
+          calm(proposal);
+        }
+      )
+    ),
+
+    new Resolved(
+      `${prefix}:proposal/resolved/cancel-treaty`,
+      accepted(CancelTreaty),
+      new Effect(
+        async (resolution: IResolution, proposal: IProposal): Promise<void> => {
+          const enemy = (proposal as CancelTreaty).with(),
+            meeting = knownMeeting(negotiationOf(proposal));
+
+          activeDeclarations(
+            dependencies,
+            Peace,
+            resolution.by(),
+            enemy
+          ).forEach((peace) => peace.expire(resolution.by()));
+
+          dependencies.interactionRegistry.register(
+            new Vendetta(enemy, resolution.by(), new Never(), ruleRegistry)
+          );
+
+          calm(proposal);
+
+          if (meeting !== null && random() < waiveTribute) {
+            meeting.stance.tribute = 0;
+          }
+        }
+      )
+    ),
+
+    new Resolved(
+      `${prefix}:proposal/resolved/exchange-knowledge`,
+      accepted(ExchangeKnowledge),
+      new Effect(
+        async (resolution: IResolution, proposal: IProposal): Promise<void> => {
+          // `resolution.by()` agreed to the exchange; each side picks what it takes.
+          const [by, other] = [resolution.by(), resolution.for()[0]],
+            choose = (player: Player, from: Player) =>
+              clientRegistry.getByPlayer(player).chooseFromList(
+                new ChoiceMeta(
+                  advancesLacked(dependencies, from, player).map((advance) =>
+                    advance.sourceClass()
+                  ),
+                  'diplomacy.exchange-knowledge',
+                  resolution
+                )
+              ),
+            byAdvance = await choose(by, other),
+            otherAdvance = await choose(other, by);
+
+          playerResearchRegistry.getByPlayer(by).addAdvance(byAdvance);
+          playerResearchRegistry.getByPlayer(other).addAdvance(otherAdvance);
+
+          recordTaken(proposal, by, byAdvance);
+          recordTaken(proposal, other, otherAdvance);
+
+          calm(proposal);
+        }
+      )
+    ),
+
+    new Resolved(
+      `${prefix}:proposal/resolved/declare-war`,
+      acknowledged('declare-war', 'computer.war'),
+      new Effect(
+        async (resolution: IResolution, proposal: IProposal): Promise<void> =>
+          declareWar(dependencies, proposal.by(), resolution.by())
+      )
+    ),
+
+    new Resolved(
+      `${prefix}:proposal/resolved/computer-peace`,
+      acknowledged('computer.peace'),
+      new Effect(
+        async (resolution: IResolution, proposal: IProposal): Promise<void> => {
+          const [player, other] = [proposal.by(), resolution.by()],
+            theirs = advancesLacked(dependencies, other, player),
+            ours = advancesLacked(dependencies, player, other);
+
+          if (theirs.length > 0 && ours.length > 0) {
+            give(dependencies, theirs[theirs.length - 1], other, player);
+            give(dependencies, ours[ours.length - 1], player, other);
+          }
+
+          makePeace(dependencies, player, other);
+        }
+      )
+    ),
+  ];
+};
+
+export default resolvedRules;
