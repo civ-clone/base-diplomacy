@@ -10,6 +10,17 @@
   "author": "dom111 <dom111@users.noreply.github.com>",
   "license": "MIT",
   "private": false,
+  "files": [
+    "*.ts",
+    "*.js",
+    "*.js.map",
+    "Dialogues/**/*.ts",
+    "Dialogues/**/*.js",
+    "Dialogues/**/*.js.map",
+    "lib/**/*.ts",
+    "lib/**/*.js",
+    "lib/**/*.js.map"
+  ],
   "scripts": {
     "build": "npm run ts:compile && npm run prettier:format",
     "prettier:check": "prettier --config .prettierrc --check '**/*.ts'",
