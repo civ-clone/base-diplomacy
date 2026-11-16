@@ -256,7 +256,7 @@ export const stance = (
 
   // 8. Its senate: a hostile player whose government answers to one, without a grudge, backs down if `other` is at
   //  least two-thirds as strong; otherwise it gives up its government, and stays hostile.
-  if (hostile && !vendetta && readers.hasSenate(player)) {
+  if (hostile && !vendetta && readers.hasSenate(player, other)) {
     if (3 * theirPower > 2 * ourPower && !threatened) {
       hostile = false;
     } else if (changeGovernment !== null) {

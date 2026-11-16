@@ -74,6 +74,28 @@ describe('stance', (): void => {
     expect(result.hostile).true;
   });
 
+  it('asks the senate about the player it would turn on', (): void => {
+    const { dependencies, players, readers } = threatening({ senate: true }),
+      asked: Player[][] = [];
+
+    stance(
+      dependencies,
+      {
+        ...readers,
+        hasSenate: (player: Player, other: Player): boolean => {
+          asked.push([player, other]);
+
+          return readers.hasSenate(player, other);
+        },
+      },
+      numbers,
+      players[0],
+      players[1]
+    );
+
+    expect(asked).eql([[players[0], players[1]]]);
+  });
+
   it('tosses one coin when it wants peace, and may waive the tribute', (): void => {
     const { dependencies, players, readers } = threatening({ mood: -3 });
     let tossed = 0;

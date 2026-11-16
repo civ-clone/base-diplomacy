@@ -9,8 +9,9 @@ export interface Readers {
   nuclear: (player: Player) => number;
   // Its leader's temper: above 0 the more aggressive, below 0 the more friendly.
   mood: (player: Player) => number;
-  // Whether `player`'s government answers to a senate, which holds it back from war.
-  hasSenate: (player: Player) => boolean;
+  // Whether `player`'s government answers to a senate, which holds it back from war with `other`. Civ1's reader looks
+  //  only at `player`; a rule set whose senate weighs the other side (Civ2's) uses both.
+  hasSenate: (player: Player, other: Player) => boolean;
   // The game's difficulty level, 0 the easiest.
   level: () => number;
 }

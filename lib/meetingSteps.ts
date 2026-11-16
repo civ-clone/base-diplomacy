@@ -32,8 +32,9 @@ export type MeetingStep = [(negotiation: Negotiation) => boolean, Next];
 export interface MeetingStepRules {
   // The meeting for a negotiation (`meetingFor`).
   meeting: (negotiation: Negotiation) => Meeting;
-  // Whether `player`'s government answers to a senate: a computer player at peace makes no demand of it.
-  hasSenate: (player: Player) => boolean;
+  // Whether `player`'s government answers to a senate (asked about `other`, the computer player): a computer player at
+  //  peace makes no demand of it.
+  hasSenate: (player: Player, other: Player) => boolean;
   // The dialogue in which the computer player says which advance it took in an exchange of knowledge.
   advanceTaken: (
     player: Player,
@@ -333,7 +334,7 @@ export const meetingSteps = (
     handoverDemand: Next = (negotiation) => {
       const { player, other, stance } = meeting(negotiation);
 
-      if (rules.hasSenate(other)) {
+      if (rules.hasSenate(other, player)) {
         return null;
       }
 

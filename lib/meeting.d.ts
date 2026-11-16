@@ -12,7 +12,7 @@ export interface Meeting {
 }
 export interface MeetingRules {
   isHuman: (player: Player) => boolean;
-  hasSenate: (player: Player) => boolean;
+  hasSenate: (player: Player, other: Player) => boolean;
   wouldGoToWar: (player: Player, other: Player) => boolean;
   stance: (
     player: Player,
