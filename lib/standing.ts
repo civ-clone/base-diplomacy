@@ -1,3 +1,4 @@
+import { TreatyLevel, hasTreatyLevel } from './treatyLevel';
 import { IStrength } from '@civ-clone/core-power/Rules/MilitaryStrength';
 import City from '@civ-clone/core-city/City';
 import Contact from '@civ-clone/base-diplomacy-interaction-contact/Contact';
@@ -6,7 +7,6 @@ import Gold from '@civ-clone/base-city-yield-gold/Gold';
 import Government from '@civ-clone/core-government/Government';
 import LandMass from '@civ-clone/core-world/LandMass';
 import Negotiation from '@civ-clone/core-diplomacy/Negotiation';
-import Peace from '@civ-clone/base-diplomacy-declaration-peace/Peace';
 import Player from '@civ-clone/core-player/Player';
 import Tile from '@civ-clone/core-world/Tile';
 import Trait from '@civ-clone/core-civilization/Trait';
@@ -129,16 +129,12 @@ export const gold = (dependencies: Dependencies, player: Player): number => {
 export const cityCount = (dependencies: Dependencies, player: Player): number =>
   dependencies.cityRegistry.getByPlayer(player).length;
 
+// At peace, or allied (an alliance implies peace): `hasTreatyLevel`.
 export const atPeace = (
   dependencies: Dependencies,
   player: Player,
   other: Player
-): boolean =>
-  dependencies.interactionRegistry
-    .getByPlayers(player, other)
-    .some(
-      (interaction) => interaction instanceof Peace && interaction.active()
-    );
+): boolean => hasTreatyLevel(dependencies, player, other, TreatyLevel.Peace);
 
 // Whether the two have met. Any interaction between them will do, a `Contact` or a negotiation.
 export const haveMet = (

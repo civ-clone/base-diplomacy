@@ -4,6 +4,7 @@ import InteractionRegistry from '@civ-clone/core-diplomacy/InteractionRegistry';
 import LandMassRegistry from '@civ-clone/core-world/LandMassRegistry';
 import PlayerGovernmentRegistry from '@civ-clone/core-government/PlayerGovernmentRegistry';
 import PlayerRegistry from '@civ-clone/core-player/PlayerRegistry';
+import PlayerWorldRegistry from '@civ-clone/core-player-world/PlayerWorldRegistry';
 import PlayerResearchRegistry from '@civ-clone/core-science/PlayerResearchRegistry';
 import PlayerTreasuryRegistry from '@civ-clone/core-treasury/PlayerTreasuryRegistry';
 import RuleRegistry from '@civ-clone/core-rule/RuleRegistry';
@@ -20,6 +21,8 @@ export interface Dependencies {
   landMassRegistry: LandMassRegistry;
   playerGovernmentRegistry: PlayerGovernmentRegistry;
   playerRegistry: PlayerRegistry;
+  // Only what shares maps needs it (`shareMaps`), so a ruleset that shares none can leave it out.
+  playerWorldRegistry?: PlayerWorldRegistry;
   playerResearchRegistry: PlayerResearchRegistry;
   playerTreasuryRegistry: PlayerTreasuryRegistry;
   ruleRegistry: RuleRegistry;

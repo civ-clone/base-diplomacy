@@ -4,9 +4,25 @@ import Player from '@civ-clone/core-player/Player';
 export declare const declareWar: (
   dependencies: Dependencies,
   player: Player,
-  other: Player
+  other: Player,
+  forced?: boolean
 ) => void;
 export declare const makePeace: (
+  dependencies: Dependencies,
+  player: Player,
+  other: Player
+) => void;
+export declare const makeCeasefire: (
+  dependencies: Dependencies,
+  player: Player,
+  other: Player
+) => void;
+export declare const makeAlliance: (
+  dependencies: Dependencies,
+  player: Player,
+  other: Player
+) => void;
+export declare const cancelAlliance: (
   dependencies: Dependencies,
   player: Player,
   other: Player
