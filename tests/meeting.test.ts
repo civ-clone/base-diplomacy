@@ -5,6 +5,7 @@ import Dialogue from '@civ-clone/core-diplomacy/Negotiation/Dialogue';
 import Effect from '@civ-clone/core-rule/Effect';
 import { IAction } from '@civ-clone/core-diplomacy/Negotiation/Action';
 import Negotiation from '@civ-clone/core-diplomacy/Negotiation';
+import Player from '@civ-clone/core-player/Player';
 import { Stance } from '../lib/stance';
 import Step from '@civ-clone/core-diplomacy/Rules/Negotiation/Step';
 import { expect } from 'chai';
@@ -82,6 +83,26 @@ describe('meetingFor', (): void => {
     // The second player would go to war too, and has no senate.
     expect(decide(senate)).equal('war');
     expect(decide(person)).null;
+
+    // A senate is asked about the player it would keep its side from war with.
+    const asked: Player[][] = [],
+      { dependencies, players, rules, ruleRegistry } = setup(false, true);
+
+    meetingFor(
+      dependencies,
+      {
+        ...rules,
+        hasSenate: (player: Player, other: Player): boolean => {
+          asked.push([player, other]);
+
+          return false;
+        },
+      },
+      new Negotiation(players[0], players[1], ruleRegistry),
+      () => 0
+    );
+
+    expect(asked).eql([[players[0], players[1]]]);
   });
 
   it('is calmed by what the other player gives', (): void => {

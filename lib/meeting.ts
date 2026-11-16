@@ -23,8 +23,8 @@ export interface Meeting {
 export interface MeetingRules {
   // Whether a person plays `player`.
   isHuman: (player: Player) => boolean;
-  // Whether `player`'s government answers to a senate, which keeps it from war between computer players.
-  hasSenate: (player: Player) => boolean;
+  // Whether `player`'s government answers to a senate, which keeps it from war with `other` between computer players.
+  hasSenate: (player: Player, other: Player) => boolean;
   // Whether computer player `player` would go to war with computer player `other`.
   wouldGoToWar: (player: Player, other: Player) => boolean;
   // How `player` comes to the meeting (`stance`), given the coin and the government change.
@@ -53,7 +53,7 @@ const computerDecision = (
   const wants = (a: Player, b: Player): boolean =>
     rules.wouldGoToWar(a, b) &&
     !isPacified(a, b, dependencies.ruleRegistry) &&
-    !rules.hasSenate(a);
+    !rules.hasSenate(a, b);
 
   if (wants(player, other) || wants(other, player)) {
     return atPeace(dependencies, player, other) || firstContact
