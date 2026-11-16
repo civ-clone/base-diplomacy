@@ -68,6 +68,11 @@ describe('treatyLevel', (): void => {
 
     expect(treatyLevel(dependencies, a, b)).equal(TreatyLevel.War);
     expect(treatyLevel(dependencies, b, a)).equal(TreatyLevel.War);
+    // The pair's Contact comes before the War in their list: it mustn't be taken for the answer.
+    expect(hasTreatyLevel(dependencies, a, b, TreatyLevel.Contact)).false;
+    expect(hasTreatyLevel(dependencies, a, b, TreatyLevel.War)).true;
+    expect(hasTreatyLevel(dependencies, a, c, TreatyLevel.Contact)).true;
+    expect(hasTreatyLevel(dependencies, a, c, TreatyLevel.Ceasefire)).false;
   });
 
   it('answers the highest treaty in force, an alliance over the peace beside it', (): void => {

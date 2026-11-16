@@ -26,7 +26,7 @@ export enum TreatyLevel {
   Alliance = 4,
 }
 
-// The highest level in force among `interactions`, looking no further once `enough` is reached.
+// The highest level in force among `interactions`, looking no further once a treaty of at least `enough` is found.
 const levelOf = (
   interactions: readonly unknown[],
   enough: TreatyLevel
@@ -54,7 +54,8 @@ const levelOf = (
       }
     }
 
-    if (level >= enough) {
+    // A treaty in force can't be lowered by anything later in the list, but `Contact` can still turn out to be `War`.
+    if (level >= enough && level >= TreatyLevel.Ceasefire) {
       return level;
     }
   }
