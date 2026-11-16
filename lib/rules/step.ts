@@ -21,7 +21,7 @@ import { takenBy } from '../exchanged';
  */
 export const stepRules = (
   dependencies: Dependencies,
-  rules: Pick<MeetingStepRules, 'meeting' | 'hasSenate'>,
+  rules: Pick<MeetingStepRules, 'meeting' | 'hasSenate' | 'isHuman'>,
   numbers: MeetingStepNumbers
 ): Step[] =>
   meetingSteps(
@@ -29,6 +29,7 @@ export const stepRules = (
     {
       meeting: rules.meeting,
       hasSenate: rules.hasSenate,
+      isHuman: rules.isHuman,
       advanceTaken: (
         player: Player,
         advance: typeof Advance,

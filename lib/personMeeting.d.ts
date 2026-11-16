@@ -4,6 +4,8 @@ import InteractionRule from '@civ-clone/core-diplomacy/Rules/Negotiation/Interac
 import { MeetingStep } from './meetingSteps';
 import Negotiation from '@civ-clone/core-diplomacy/Negotiation';
 import Player from '@civ-clone/core-player/Player';
+import { personLed, sides } from './personLed';
+export { personLed, sides };
 export type ProposalMaker = (
   negotiation: Negotiation,
   person: Player,
@@ -15,14 +17,6 @@ export interface PersonMeetingRules {
   answer: (proposal: IProposal, negotiation: Negotiation) => boolean;
   patienceLimit: (negotiation: Negotiation) => number;
 }
-export declare const sides: (negotiation: Negotiation) => {
-  person: Player;
-  computer: Player;
-};
-export declare const personLed: (
-  isHuman: (player: Player) => boolean,
-  negotiation: Negotiation
-) => boolean;
 export declare const proposalAvailable: (
   { ruleRegistry }: Pick<Dependencies, 'ruleRegistry'>,
   proposal: IProposal

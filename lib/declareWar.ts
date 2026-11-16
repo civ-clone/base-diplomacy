@@ -1,4 +1,5 @@
 import Alliance from '@civ-clone/base-diplomacy-declaration-alliance/Alliance';
+import { treatyLevel } from './treatyLevel';
 import Ceasefire from '@civ-clone/base-diplomacy-declaration-ceasefire/Ceasefire';
 import Declaration from '@civ-clone/core-diplomacy/Declaration';
 import DeclaredWar from '../Rules/DeclaredWar';
@@ -25,13 +26,17 @@ const active = (
 
 // `player` goes to war with `other`: any treaty between them ends (a ceasefire, a peace, an alliance, which is a
 //  peace), and so does a peace either meant to drop. `forced` when `player` was made to declare it, by something it did
-//  under a treaty, rather than choosing war; the `DeclaredWar` rules hear which, once the war is declared.
+//  under a treaty, rather than choosing war; the `DeclaredWar` rules hear which, once the war is declared, and the
+//  treaty level it broke (`TreatyLevel`, as it stood before), so a rule set can tell an alliance, a peace, a ceasefire
+//  or none apart.
 export const declareWar = (
   dependencies: Dependencies,
   player: Player,
   other: Player,
   forced: boolean = false
 ): void => {
+  const broken = treatyLevel(dependencies, player, other);
+
   active(dependencies, ShamPeace, player, other).forEach((sham) =>
     sham.expire(player)
   );
@@ -46,15 +51,19 @@ export const declareWar = (
     new War(player, other, new Never(), dependencies.ruleRegistry)
   );
 
-  dependencies.ruleRegistry.process(DeclaredWar, player, other, forced);
+  dependencies.ruleRegistry.process(DeclaredWar, player, other, forced, broken);
 };
 
-// `player` and `other` make peace, unless they have already.
+// `player` and `other` make peace, unless they have already. Any ceasefire between them ends: the peace supersedes it.
 export const makePeace = (
   dependencies: Dependencies,
   player: Player,
   other: Player
 ): void => {
+  active(dependencies, Ceasefire, player, other).forEach((ceasefire) =>
+    ceasefire.expire(player)
+  );
+
   if (active(dependencies, Peace, player, other).length > 0) {
     return;
   }
@@ -122,9 +131,14 @@ export const cancelAlliance = (
   player: Player,
   other: Player
 ): void => {
-  active(dependencies, Alliance, player, other).forEach((alliance) =>
-    alliance.expire(player)
-  );
+  const alliances = active(dependencies, Alliance, player, other);
+
+  // No alliance, nothing to cancel: no peace is made either.
+  if (alliances.length === 0) {
+    return;
+  }
+
+  alliances.forEach((alliance) => alliance.expire(player));
 
   makePeace(dependencies, player, other);
 };

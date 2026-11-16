@@ -14,14 +14,15 @@ level) and its own numbers, so it keeps its own rule ids, numbers and registrati
   contact < ceasefire < peace < alliance); `hasTreatyLevel(dependencies, player, other, level)`, whether they reach
   `level`, which stops looking once they do; and `treatyName`. `atPeace` is `hasTreatyLevel(..., TreatyLevel.Peace)`:
   ask these rather than looking for a `Peace`, so ceasefires and alliances count. War and contact differ only for
-  rule sets that make ceasefires (`makeCeasefire` ends the war): Civ1 counts any two who have met with no peace as at
-  war (`atWar`).
+  rule sets that make ceasefires (`makeCeasefire` ends the war). `atWar` is met with no treaty, a ceasefire counting
+  as one; Civ1 has none, so for it that is met with no peace, as before.
 - `lib/contact`: `contactOnMove(interactionRegistry, unitRegistry)`, the criteria and effect of a `Moved` rule that
   makes contact between players whose units meet.
 - `lib/declareWar`: `declareWar(dependencies, player, other, forced?)`, which ends every treaty between them and
-  tells the `DeclaredWar` rules (`Rules/DeclaredWar`: `(by, against, forced)`) whether `player` was made to declare
-  it; `makePeace`, `makeCeasefire`, `makeAlliance` (an `Alliance` beside a `Peace`, so the pair stays at peace when
-  `cancelAlliance` ends it) and `activeDeclarations`.
+  tells the `DeclaredWar` rules (`Rules/DeclaredWar`: `(by, against, forced, broken)`, `broken` the `TreatyLevel`
+  just before) whether `player` was made to declare it; `makePeace` (which ends a ceasefire), `makeCeasefire`,
+  `makeAlliance` (an `Alliance` beside a `Peace`, so the pair stays at peace when `cancelAlliance` ends it;
+  `cancelAlliance` with no alliance does nothing) and `activeDeclarations`.
 - `lib/embassy`: `hasEmbassy(dependencies, player, other)`, one way: an `Embassy` `player` holds with `other`, or
   any `HasEmbassy` rule (`Rules/HasEmbassy`) answering `true`, as a wonder that acts as an embassy with everyone
   would.
@@ -45,7 +46,8 @@ level) and its own numbers, so it keeps its own rule ids, numbers and registrati
 - `lib/meeting`: `meetingFor(dependencies, rules, negotiation, random)`, the meeting worked out once per
   negotiation, `knownMeeting`, `negotiationOf` and `calm`.
 - `lib/meetingSteps`: `meetingSteps(dependencies, rules, numbers)`, the meeting's steps in order, each a criterion
-  and what comes next, for the ruleset to make `Step` rules of.
+  and what comes next, for the ruleset to make `Step` rules of. Given `rules.isHuman`, no row applies to a meeting a
+  person opened (`lib/personLed`), so a ruleset can register these beside `personMeetingSteps`.
 - `lib/knowledge`: `advancesLacked` and `give`.
 - `lib/exchanged`: `recordTaken` and `takenBy`, what each player took in an exchange of knowledge.
 - `Records/PatienceRecord` and `Records/LastContactRecord`: the saved records behind `patience` and `lastContact`,

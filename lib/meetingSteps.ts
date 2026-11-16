@@ -1,4 +1,5 @@
 import { Meeting } from './meeting';
+import { personLed } from './personLed';
 import { advancesLacked as lacked } from './knowledge';
 import { cityCount, gold } from './standing';
 import Accept from '@civ-clone/core-diplomacy/Proposal/Accept';
@@ -32,6 +33,10 @@ export type MeetingStep = [(negotiation: Negotiation) => boolean, Next];
 export interface MeetingStepRules {
   // The meeting for a negotiation (`meetingFor`).
   meeting: (negotiation: Negotiation) => Meeting;
+  // Whether a person plays `player`. Given, none of these rows applies to a negotiation a person opened to talk to a
+  //  computer player (`personLed`): those are `personMeetingSteps`' to answer. Civ1's meeting gives none, so every row
+  //  applies as it always has.
+  isHuman?: (player: Player) => boolean;
   // Whether `player`'s government answers to a senate (asked about `other`, the computer player): a computer player at
   //  peace makes no demand of it.
   hasSenate: (player: Player, other: Player) => boolean;
@@ -537,7 +542,18 @@ export const meetingSteps = (
       ],
     ];
 
-  return rows;
+  if (rules.isHuman === undefined) {
+    return rows;
+  }
+
+  const isHuman = rules.isHuman;
+
+  return rows.map(
+    ([applies, next]): MeetingStep => [
+      (negotiation) => !personLed(isHuman, negotiation) && applies(negotiation),
+      next,
+    ]
+  );
 };
 
 export default meetingSteps;

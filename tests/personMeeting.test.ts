@@ -21,6 +21,7 @@ import Step from '@civ-clone/core-diplomacy/Rules/Negotiation/Step';
 import Terminate from '@civ-clone/core-diplomacy/Negotiation/Terminate';
 import { expect } from 'chai';
 import patience from '../lib/patience';
+import { MeetingStepNumbers, meetingSteps } from '../lib/meetingSteps';
 import position from './lib/position';
 
 const setUp = (
@@ -215,6 +216,96 @@ describe('personMeetingSteps', (): void => {
     // Only the negotiation's own fallback: the opener ends it.
     expect(kinds(negotiation.nextSteps())).to.deep.equal([
       `Terminate:${computer.id()}`,
+    ]);
+  });
+});
+
+describe('personMeetingSteps beside meetingSteps', (): void => {
+  const numbers: MeetingStepNumbers = {
+    openKnowledge: 6,
+    provokingTribute: 100,
+    goldUnit: 50,
+    advanceGiftFear: 3,
+    goldGift: (fear: number): number => fear,
+  };
+
+  // Both sets of rows registered, as a rule set with both kinds of meeting registers them, `meetingSteps` told who is
+  //  a person.
+  const both = () => {
+    const built = setUp(),
+      { dependencies, readers, ruleRegistry } = built;
+
+    ruleRegistry.register(
+      ...meetingSteps(
+        dependencies,
+        {
+          isHuman: readers.isHuman,
+          meeting: (): never => {
+            throw new Error('Not asked for in these steps.');
+          },
+          hasSenate: (): boolean => false,
+          advanceTaken: (): never => {
+            throw new Error('Not asked for in these steps.');
+          },
+          takenBy: () => null,
+        },
+        numbers
+      ).map(
+        ([applies, next]) =>
+          new Step(
+            new Criterion(
+              (negotiation: Negotiation): boolean =>
+                applies(negotiation) && next(negotiation) !== null
+            ),
+            new Effect(
+              (negotiation: Negotiation): IAction => next(negotiation)!
+            )
+          )
+      )
+    );
+
+    return built;
+  };
+
+  it('leaves a meeting a person opened to the person-led rows', async (): Promise<void> => {
+    const { players, ruleRegistry } = both(),
+      [person, computer] = players,
+      negotiation = new Negotiation(person, computer, ruleRegistry);
+
+    // One Initiate, not one from each set of rows.
+    expect(kinds(negotiation.nextSteps())).to.deep.equal([
+      `Initiate:${person.id()}`,
+    ]);
+
+    await take(negotiation);
+
+    // Only the computer player's own answer, not `meetingSteps`' Accept and Decline as well.
+    expect(kinds(negotiation.nextSteps())).to.deep.equal([
+      `Accept:${computer.id()}`,
+    ]);
+
+    await take(negotiation);
+
+    expect(kinds(negotiation.nextSteps())).to.deep.equal([
+      `OfferPeace:${person.id()}`,
+      `Terminate:${person.id()}`,
+    ]);
+  });
+
+  it('leaves a meeting a computer player opened to meetingSteps', (): void => {
+    const { players, ruleRegistry } = both(),
+      [person, computer] = players,
+      negotiation = new Negotiation(computer, person, ruleRegistry);
+
+    expect(kinds(negotiation.nextSteps())).to.deep.equal([
+      `Initiate:${computer.id()}`,
+    ]);
+
+    negotiation.proceed(negotiation.nextSteps()[0]);
+
+    expect(kinds(negotiation.nextSteps())).to.deep.equal([
+      `Accept:${person.id()}`,
+      `Decline:${person.id()}`,
     ]);
   });
 });

@@ -8,6 +8,7 @@ export type Next = (negotiation: Negotiation) => IAction | null;
 export type MeetingStep = [(negotiation: Negotiation) => boolean, Next];
 export interface MeetingStepRules {
   meeting: (negotiation: Negotiation) => Meeting;
+  isHuman?: (player: Player) => boolean;
   hasSenate: (player: Player, other: Player) => boolean;
   advanceTaken: (
     player: Player,

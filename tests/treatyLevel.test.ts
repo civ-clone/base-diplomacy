@@ -180,29 +180,88 @@ describe('treatyLevel', (): void => {
   });
 });
 
+describe('treaties and ceasefires', (): void => {
+  it('ends a ceasefire with a peace', (): void => {
+    const { dependencies, players } = met(),
+      [a, b] = players;
+
+    declareWar(dependencies, a, b);
+    makeCeasefire(dependencies, a, b);
+    makePeace(dependencies, b, a);
+
+    expect(activeDeclarations(dependencies, Ceasefire, a, b)).length(0);
+    expect(activeDeclarations(dependencies, Peace, a, b)).length(1);
+    expect(treatyLevel(dependencies, a, b)).equal(TreatyLevel.Peace);
+  });
+
+  it('makes no peace when there is no alliance to cancel', (): void => {
+    const { dependencies, players } = met(),
+      [a, b] = players;
+
+    cancelAlliance(dependencies, a, b);
+
+    expect(activeDeclarations(dependencies, Peace, a, b)).length(0);
+    expect(treatyLevel(dependencies, a, b)).equal(TreatyLevel.Contact);
+  });
+
+  it('finds a ceasefire listed after a war, and the pair is not at war', (): void => {
+    const { dependencies, interactionRegistry, players, ruleRegistry } = met(),
+      [a, b] = players;
+
+    // Registered directly, so the war is still in force and comes first in the pair's list.
+    interactionRegistry.register(
+      new War(a, b, new Never(), ruleRegistry),
+      new Ceasefire(a, b, new Never(), ruleRegistry)
+    );
+
+    expect(hasTreatyLevel(dependencies, a, b, TreatyLevel.Ceasefire)).true;
+    expect(hasTreatyLevel(dependencies, a, b, TreatyLevel.Peace)).false;
+    expect(treatyLevel(dependencies, a, b)).equal(TreatyLevel.Ceasefire);
+    expect(atWar(dependencies, a, b)).false;
+    expect(atPeace(dependencies, a, b)).false;
+  });
+});
+
 describe('declareWar', (): void => {
   it('tells the DeclaredWar rules who declared on whom, and whether they were made to', (): void => {
     const { dependencies, players, ruleRegistry } = met(),
       [a, b] = players,
-      heard: [Player, Player, boolean][] = [];
+      heard: [Player, Player, boolean, TreatyLevel][] = [];
 
     ruleRegistry.register(
       new DeclaredWar(
-        new Effect((by: Player, against: Player, forced: boolean): void => {
-          // The war is declared by the time it's heard.
-          expect(treatyLevel(dependencies, by, against)).equal(TreatyLevel.War);
+        new Effect(
+          (
+            by: Player,
+            against: Player,
+            forced: boolean,
+            broken: TreatyLevel
+          ): void => {
+            // The war is declared by the time it's heard.
+            expect(treatyLevel(dependencies, by, against)).equal(
+              TreatyLevel.War
+            );
 
-          heard.push([by, against, forced]);
-        })
+            heard.push([by, against, forced, broken]);
+          }
+        )
       )
     );
 
+    makeAlliance(dependencies, a, b);
     declareWar(dependencies, a, b);
     declareWar(dependencies, b, a, true);
+    makeCeasefire(dependencies, a, b);
+    declareWar(dependencies, a, b);
+    makePeace(dependencies, a, b);
+    declareWar(dependencies, a, b);
 
+    // The level each declaration broke, as it stood before.
     expect(heard).to.deep.equal([
-      [a, b, false],
-      [b, a, true],
+      [a, b, false, TreatyLevel.Alliance],
+      [b, a, true, TreatyLevel.War],
+      [a, b, false, TreatyLevel.Ceasefire],
+      [a, b, false, TreatyLevel.Peace],
     ]);
   });
 });

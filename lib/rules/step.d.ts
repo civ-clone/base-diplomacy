@@ -8,7 +8,7 @@ import Step from '@civ-clone/core-diplomacy/Rules/Negotiation/Step';
  */
 export declare const stepRules: (
   dependencies: Dependencies,
-  rules: Pick<MeetingStepRules, 'meeting' | 'hasSenate'>,
+  rules: Pick<MeetingStepRules, 'meeting' | 'hasSenate' | 'isHuman'>,
   numbers: MeetingStepNumbers
 ) => Step[];
 export default stepRules;

@@ -149,7 +149,7 @@ export const haveMet = (
         interaction instanceof Contact || interaction instanceof Negotiation
     );
 
-// Two players are at war when they've met and have no peace treaty.
+// Two players are at war when they've met and have no treaty: no peace, and no ceasefire either.
 export const atWar = (
   dependencies: Dependencies,
   player: Player,
@@ -157,7 +157,7 @@ export const atWar = (
 ): boolean =>
   player !== other &&
   haveMet(dependencies, player, other) &&
-  !atPeace(dependencies, player, other);
+  !hasTreatyLevel(dependencies, player, other, TreatyLevel.Ceasefire);
 
 // The sum of `score` over the traits of `player`'s leader.
 export const traitScore = (

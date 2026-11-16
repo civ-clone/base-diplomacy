@@ -17,6 +17,9 @@ import ProposalAvailable from '../Rules/ProposalAvailable';
 import Resolution from '@civ-clone/core-diplomacy/Proposal/Resolution';
 import Terminate from '@civ-clone/core-diplomacy/Negotiation/Terminate';
 import patience from './patience';
+import { personLed, sides } from './personLed';
+
+export { personLed, sides };
 
 // Pieces for a meeting a person leads: the person opens it (`Negotiation#initiator()`), picks what to propose from a
 //  menu, and the computer player answers each proposal, for as long as its patience lasts. Each piece is a list of
@@ -47,28 +50,6 @@ export interface PersonMeetingRules {
   // How much of its patience with the person the computer player may have spent and still listen to another proposal.
   patienceLimit: (negotiation: Negotiation) => number;
 }
-
-// The two sides of a negotiation a person opened: the person, and the computer player they came to.
-export const sides = (
-  negotiation: Negotiation
-): { person: Player; computer: Player } => {
-  const person = negotiation.initiator();
-
-  return {
-    person,
-    computer: negotiation.players().find((player) => player !== person)!,
-  };
-};
-
-// Whether a person opened `negotiation` to talk to a computer player.
-export const personLed = (
-  isHuman: (player: Player) => boolean,
-  negotiation: Negotiation
-): boolean => {
-  const { person, computer } = sides(negotiation);
-
-  return isHuman(person) && computer !== undefined && !isHuman(computer);
-};
 
 // Whether `proposal` may be offered: at least one `ProposalAvailable` rule answers, and every answer is `true`.
 export const proposalAvailable = (
